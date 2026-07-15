@@ -231,3 +231,42 @@ if ('serviceWorker' in navigator) {
       .catch((err) => console.error('Service Worker registration failed:', err));
   });
 }
+
+/* ==========================================================================
+   GIỮ MÀN HÌNH ĐIỆN THOẠI LUÔN SÁNG (SCREEN WAKE LOCK)
+   ========================================================================== */
+
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (wakeLock !== null) return; // Đã kích hoạt khóa trước đó
+  
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('[Wake Lock] Đã khóa trạng thái sáng màn hình thành công.');
+      
+      // Lắng nghe khi trình duyệt giải phóng khóa (ví dụ chuyển tab hoặc lock máy bằng tay)
+      wakeLock.addEventListener('release', () => {
+        console.log('[Wake Lock] Đã giải phóng khóa màn hình.');
+        wakeLock = null;
+      });
+    }
+  } catch (err) {
+    console.warn(`[Wake Lock Warning] Yêu cầu khóa màn hình thất bại: ${err.name}, ${err.message}`);
+  }
+}
+
+// Cố gắng yêu cầu Wake Lock ngay khi tải trang
+window.addEventListener('load', requestWakeLock);
+
+// Tự động yêu cầu lại Wake Lock khi người dùng chuyển lại tab (khi tab hiển thị trở lại)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible') {
+    await requestWakeLock();
+  }
+});
+
+// Yêu cầu khi người dùng click hoặc chạm vào màn hình (qua mặt chính sách bảo mật trình duyệt)
+document.addEventListener('click', requestWakeLock);
+document.addEventListener('touchstart', requestWakeLock);
