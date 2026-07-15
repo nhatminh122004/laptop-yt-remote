@@ -1,5 +1,6 @@
 let ws = null;
 let activeTabId = null;
+let pingInterval = null;
 
 console.log('[Background] Extension Background Service Worker loaded (Local Mode).');
 
@@ -12,6 +13,15 @@ function connectSocket() {
   ws.onopen = () => {
     console.log('[Background] Connected to local server.');
     requestStatusFromActiveTab();
+
+    // Gửi tin nhắn ping giữ Service Worker hoạt động
+    if (pingInterval) clearInterval(pingInterval);
+    pingInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+        console.log('[Background] Sent ping heartbeat.');
+      }
+    }, 15000); // Gửi mỗi 15 giây (dưới giới hạn ngủ 30 giây của Manifest V3)
   };
 
   ws.onmessage = (event) => {
@@ -35,6 +45,10 @@ function connectSocket() {
 
   ws.onclose = () => {
     console.log('[Background] Disconnected from local server.');
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
   };
 
   ws.onerror = (err) => {
