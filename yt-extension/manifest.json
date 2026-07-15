@@ -5,14 +5,10 @@
   "description": "Điều khiển nhạc trên YouTube từ điện thoại Android thông qua kết nối mạng LAN.",
   "permissions": [
     "activeTab",
-    "tabs",
-    "storage"
+    "tabs"
   ],
   "background": {
     "service_worker": "background.js"
-  },
-  "action": {
-    "default_popup": "popup.html"
   },
   "content_scripts": [
     {

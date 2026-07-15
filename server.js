@@ -3,11 +3,12 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const WebSocket = require('ws');
+const { exec, spawn } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
 
-// 1. Cấu hình Socket.IO cho Điện thoại Android
+// 1. Khởi tạo Socket.IO cho Điện thoại Android
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,15 +16,7 @@ const io = new Server(server, {
   }
 });
 
-// 2. Khởi tạo các WebSocket Server thuần không tự lắng nghe cổng riêng
-const wssExtension = new WebSocket.Server({ noServer: true });
-const wssLaptop = new WebSocket.Server({ noServer: true });
-
-let extensionSocket = null;
-let laptopSocket = null;
-let laptopOnline = false;
-
-// Bộ nhớ đệm lưu trạng thái nhạc YouTube và âm lượng Laptop
+// Bộ nhớ đệm lưu trạng thái nhạc YouTube
 let ytStatus = {
   title: 'No track playing',
   artist: 'YouTube',
@@ -33,41 +26,17 @@ let ytStatus = {
   playing: false
 };
 
-let sysVolume = {
-  volume: 50,
-  muted: false
-};
-
-// Định tuyến các yêu cầu nâng cấp kết nối (Upgrade HTTP -> WebSocket) trên cùng một cổng
-server.on('upgrade', (request, socket, head) => {
-  const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
-
-  if (pathname === '/extension') {
-    wssExtension.handleUpgrade(request, socket, head, (ws) => {
-      wssExtension.emit('connection', ws, request);
-    });
-  } else if (pathname === '/laptop') {
-    wssLaptop.handleUpgrade(request, socket, head, (ws) => {
-      wssLaptop.emit('connection', ws, request);
-    });
-  } else {
-    // Để Socket.IO tự xử lý yêu cầu nâng cấp của nó (mặc định chạy qua đường dẫn /socket.io/)
-  }
+// 2. Khởi tạo WebSocket Server (Cổng 3001) dành riêng cho Chrome Extension
+const wss = new WebSocket.Server({ port: 3001 }, () => {
+  console.log('[WS] Chrome Extension server listening on port 3001');
 });
+let extensionSocket = null;
 
-// Phục vụ giao diện tĩnh cho điện thoại từ thư mục 'public'
-app.use(express.static(path.join(__dirname, 'public')));
-
-const PORT = process.env.PORT || 3000;
-
-/* ==========================================================================
-   XỬ LÝ KẾT NỐI TỪ CHROME EXTENSION (YOUTUBE REMOTE)
-   ========================================================================== */
-wssExtension.on('connection', (ws) => {
+wss.on('connection', (ws) => {
   console.log('[WS] Chrome Extension connected.');
   extensionSocket = ws;
 
-  // Yêu cầu lấy thông tin bài hát ngay khi extension kết nối
+  // Yêu cầu thông tin nhạc ngay khi Extension kết nối
   ws.send(JSON.stringify({ action: 'request-status' }));
 
   ws.on('message', (message) => {
@@ -75,11 +44,11 @@ wssExtension.on('connection', (ws) => {
       const parsed = JSON.parse(message);
       if (parsed.type === 'yt-status-update') {
         ytStatus = { ...ytStatus, ...parsed.data };
-        // Gửi cập nhật trạng thái bài nhạc về cho điện thoại
+        // Phát dữ liệu nhạc sang cho điện thoại
         io.emit('yt-status', ytStatus);
       }
     } catch (err) {
-      console.error('[WS Extension Error] Failed to parse message:', err);
+      console.error('[WS Error] Failed to parse message:', err);
     }
   });
 
@@ -91,57 +60,91 @@ wssExtension.on('connection', (ws) => {
   });
 });
 
+// Phục vụ giao diện tĩnh cho điện thoại từ thư mục 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
 /* ==========================================================================
-   XỬ LÝ KẾT NỐI TỪ LAPTOP AGENT (AUDIO HELPER C#)
+   TƯƠNG TÁC VỚI HỆ THỐNG ÂM THANH WINDOWS (C# AGENT)
    ========================================================================== */
-wssLaptop.on('connection', (ws) => {
-  console.log('[WS] Laptop Agent connected.');
-  laptopSocket = ws;
-  laptopOnline = true;
 
-  // Thông báo cho điện thoại biết Laptop đã online
-  io.emit('laptop-connection', { online: true });
+// Hàm lấy âm lượng hệ thống hiện tại
+function getSystemVolume(callback) {
+  exec('AudioHelper.exe get', (error, stdout, stderr) => {
+    if (error) {
+      console.error('[Volume Error] Fail to get volume:', error);
+      return;
+    }
+    const match = stdout.match(/Volume:(\d+)\|Muted:(true|false)/);
+    if (match) {
+      callback({
+        volume: parseInt(match[1]),
+        muted: match[2] === 'true'
+      });
+    }
+  });
+}
 
-  // Yêu cầu laptop gửi âm lượng hệ thống hiện tại
-  ws.send(JSON.stringify({ action: 'get-volume' }));
+// Hàm đặt âm lượng hệ thống
+function setSystemVolume(val) {
+  exec(`AudioHelper.exe set ${val}`, (error, stdout, stderr) => {
+    if (error) console.error('[Volume Error] Fail to set volume:', error);
+  });
+}
 
-  ws.on('message', (message) => {
+// Hàm bật/tắt tiếng hệ thống (Mute)
+function setSystemMute(val) {
+  exec(`AudioHelper.exe mute ${val}`, (error, stdout, stderr) => {
+    if (error) console.error('[Volume Error] Fail to set mute:', error);
+  });
+}
+
+// Tiến trình chạy ẩn để lấy cường độ âm thanh (Peak level) làm nhấp nháy LED RGB
+let audioStreamProcess = null;
+
+function startAudioStreaming() {
+  if (audioStreamProcess) {
     try {
-      const parsed = JSON.parse(message);
-      if (parsed.type === 'volume-status') {
-        sysVolume = { ...sysVolume, ...parsed.data };
-        // Gửi trạng thái âm lượng về cho điện thoại
-        io.emit('volume-status', sysVolume);
-      } else if (parsed.type === 'audio-peak') {
-        // Gửi liên tục cường độ âm thanh về để nhấp nháy LED RGB trên điện thoại
-        io.emit('audio-peak', parsed.data);
-      }
-    } catch (err) {
-      console.error('[WS Laptop Error] Failed to parse message:', err);
+      audioStreamProcess.kill();
+    } catch (e) {}
+  }
+
+  console.log('[Server] Spawning AudioHelper.exe to stream peak audio level...');
+  audioStreamProcess = spawn('AudioHelper.exe', ['stream', '33']);
+
+  audioStreamProcess.stdout.on('data', (data) => {
+    const output = data.toString().trim();
+    const lines = output.split('\n');
+    const lastLine = lines[lines.length - 1].trim();
+    const peak = parseFloat(lastLine);
+    if (!isNaN(peak) && peak >= 0) {
+      // Stream peak level trực tiếp về điện thoại
+      io.emit('audio-peak', peak);
     }
   });
 
-  ws.on('close', () => {
-    console.log('[WS] Laptop Agent disconnected.');
-    if (laptopSocket === ws) {
-      laptopSocket = null;
-      laptopOnline = false;
-      // Báo cho điện thoại biết Laptop đã offline
-      io.emit('laptop-connection', { online: false });
-    }
+  audioStreamProcess.on('close', (code) => {
+    console.log(`[Server] AudioHelper stream process exited with code ${code}`);
+    // Khởi động lại sau 3 giây nếu bị tắt đột ngột
+    setTimeout(startAudioStreaming, 3000);
   });
-});
+}
+
+// Khởi chạy tiến trình stream
+startAudioStreaming();
 
 /* ==========================================================================
-   XỬ LÝ KẾT NỐI TỪ ĐIỆN THOẠI ANDROID (SOCKET.IO)
+   KẾT NỐI TỪ ĐIỆN THOẠI ANDROID (SOCKET.IO)
    ========================================================================== */
 io.on('connection', (socket) => {
-  console.log('[Socket] Android Phone connected.');
+  console.log('[Socket] Phone connected.');
 
-  // Gửi ngay lập tức trạng thái kết nối của laptop, thông tin nhạc và âm lượng cho điện thoại
-  socket.emit('laptop-connection', { online: laptopOnline });
+  // Gửi thông tin nhạc YouTube hiện tại
   socket.emit('yt-status', ytStatus);
-  socket.emit('volume-status', sysVolume);
+
+  // Gửi âm lượng hệ thống hiện tại
+  getSystemVolume((vol) => {
+    socket.emit('volume-status', vol);
+  });
 
   // Nhận lệnh điều khiển YouTube từ điện thoại -> chuyển tiếp tới Chrome Extension
   socket.on('yt-command', (cmd) => {
@@ -150,34 +153,41 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Nhận lệnh điều khiển âm lượng từ điện thoại -> chuyển tiếp tới Laptop Agent C#
+  // Nhận lệnh điều khiển âm lượng từ điện thoại -> thực thi trên Windows
   socket.on('volume-command', (cmd) => {
-    if (laptopSocket && laptopSocket.readyState === WebSocket.OPEN) {
-      laptopSocket.send(JSON.stringify(cmd));
+    if (cmd.action === 'set') {
+      setSystemVolume(cmd.value);
+      io.emit('volume-status', { volume: cmd.value, muted: false });
+    } else if (cmd.action === 'mute') {
+      setSystemMute(cmd.value);
+      getSystemVolume((vol) => {
+        io.emit('volume-status', vol);
+      });
     }
   });
 
-  // Yêu cầu làm mới/đồng bộ lại trạng thái từ điện thoại
+  // Đồng bộ lại trạng thái khi điện thoại yêu cầu
   socket.on('request-status-refresh', () => {
     if (extensionSocket && extensionSocket.readyState === WebSocket.OPEN) {
       extensionSocket.send(JSON.stringify({ action: 'request-status' }));
     }
-    if (laptopSocket && laptopSocket.readyState === WebSocket.OPEN) {
-      laptopSocket.send(JSON.stringify({ action: 'get-volume' }));
-    }
+    getSystemVolume((vol) => {
+      socket.emit('volume-status', vol);
+    });
   });
 
   socket.on('disconnect', () => {
-    console.log('[Socket] Android Phone disconnected.');
+    console.log('[Socket] Phone disconnected.');
   });
 });
 
-// Chạy Server
+const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`\n======================================================`);
-  console.log(`  CLOUD SERVER ĐANG HOẠT ĐỘNG!`);
+  console.log(`  CỔNG KẾT NỐI ĐANG HOẠT ĐỘNG!`);
   console.log(`======================================================`);
-  console.log(`  Cổng máy chủ: ${PORT}`);
-  console.log(`  Chế độ: Đám mây (Hỗ trợ Glitch / Render)`);
+  console.log(`  Địa chỉ máy tính: http://localhost:${PORT}`);
+  console.log(`  Địa chỉ Mạng LAN (Nhập địa chỉ này trên điện thoại):`);
+  console.log(`   👉 http://192.168.90.81:${PORT}`);
   console.log(`======================================================\n`);
 });

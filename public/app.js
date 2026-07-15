@@ -74,25 +74,15 @@ function handleTitleMarquee(title) {
    ========================================================================== */
 
 socket.on('connect', () => {
-  statusText.textContent = 'Searching for Laptop...';
-  console.log('Connected to cloud server. Waiting for Laptop...');
+  statusDot.className = 'dot connected';
+  statusText.textContent = 'Connected to Laptop';
+  console.log('Connected to laptop server.');
 });
 
 socket.on('disconnect', () => {
   statusDot.className = 'dot disconnected';
-  statusText.textContent = 'Connecting to Cloud...';
-  console.log('Disconnected from cloud server.');
-});
-
-// Nhận cập nhật trạng thái kết nối của Laptop
-socket.on('laptop-connection', (status) => {
-  if (status.online) {
-    statusDot.className = 'dot connected';
-    statusText.textContent = 'Laptop Online';
-  } else {
-    statusDot.className = 'dot disconnected';
-    statusText.textContent = 'Laptop Offline';
-  }
+  statusText.textContent = 'Disconnected from Laptop';
+  console.log('Disconnected from laptop server.');
 });
 
 // Nhận cập nhật nhạc YouTube từ Laptop
