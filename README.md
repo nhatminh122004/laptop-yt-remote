@@ -39,28 +39,28 @@ graph TD
 
 ## 🚀 Hướng dẫn thiết lập nhanh (Quick Start)
 
-### 1. Triển khai Máy chủ lên Cloud (Render.com / Glitch.com)
-* Đẩy mã nguồn này lên kho lưu trữ **GitHub** cá nhân của bạn.
-* Đăng nhập vào **[Render.com](https://render.com/)**, tạo một **Web Service** mới và kết nối với repository GitHub này.
-* Đặt cấu hình:
-  - **Runtime**: `Node`
-  - **Start Command**: `node server.js`
-  - **Gói dịch vụ**: `Free`
-* Sau khi triển khai thành công, bạn sẽ nhận được địa chỉ URL máy chủ của mình (Ví dụ: `https://remote-cua-toi.onrender.com`).
+### 1. Triển khai Máy chủ lên Cloud (Hugging Face Spaces)
+* Đăng ký/Đăng nhập tài khoản trên **[Hugging Face](https://huggingface.co/)**.
+* Tạo một **Space** mới, cấu hình:
+  - **SDK**: `Docker`
+  - **Template**: `Blank`
+  - **Hardware**: `CPU Basic (Free)`
+* Trong mục **Files**, bấm **Upload Files** và kéo thả các file dự án lên (trừ thư mục `node_modules` và `.git`). Bấm **Commit changes** để triển khai.
+* Sau khi trạng thái báo **Running**, vào biểu tượng **3 chấm** -> **Embed this Space** -> copy đường dẫn ở phần **Direct URL** (Ví dụ: `https://ten-space.hf.space`).
 
 ### 2. Cài đặt Chrome Extension trên Laptop
 * Mở Google Chrome và truy cập địa chỉ `chrome://extensions/`.
 * Bật công tắc **Chế độ dành cho nhà phát triển (Developer mode)**.
 * Click **Tải thư mục đã giải nén (Load unpacked)** và chọn thư mục `/yt-extension` trong dự án của bạn.
-* Click vào biểu tượng của tiện ích vừa cài đặt trên thanh công cụ, nhập địa chỉ Cloud của bạn dạng WebSocket (đổi `https://` thành `wss://`, ví dụ: `wss://remote-cua-toi.onrender.com`) và nhấn **Save & Connect**.
+* Click vào biểu tượng của tiện ích trên thanh công cụ, nhập địa chỉ Cloud của bạn dạng WebSocket (đổi `https://` thành `wss://`, ví dụ: `wss://ten-space.hf.space`) và nhấn **Save & Connect**.
 
 ### 3. Chạy Laptop Agent để chỉnh âm lượng và stream âm thanh
 * Trên máy tính, vào thư mục dự án và click đúp để khởi chạy tệp **`run-client.bat`**.
-* Nhập địa chỉ Cloud của bạn (ví dụ: `wss://remote-cua-toi.onrender.com`) và nhấn **Enter**.
-* Ứng dụng sẽ chạy ẩn dưới nền để đồng bộ âm lượng và phân tích cường độ âm thanh gửi lên mây.
+* Nhập địa chỉ Cloud của bạn (ví dụ: `wss://ten-space.hf.space`) và nhấn **Enter**.
+* Ứng dụng sẽ kết nối và chạy ẩn dưới nền để đồng bộ âm lượng và cường độ âm thanh.
 
 ### 4. Cài đặt App trên điện thoại Android
-* Mở Chrome trên điện thoại, truy cập link Render của bạn (ví dụ: `https://remote-cua-toi.onrender.com`).
+* Mở Chrome trên điện thoại, truy cập link **Direct URL** của bạn (ví dụ: `https://ten-space.hf.space`).
 * Nhấn nút Menu (3 chấm) của trình duyệt Chrome -> chọn **Thêm vào màn hình chính (Add to Home screen)** để cài đặt ứng dụng.
 
 ---
