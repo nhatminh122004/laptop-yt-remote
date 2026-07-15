@@ -1,0 +1,22 @@
+# Dependency directories
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Windows temporary files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment variables
+.env
+.env.local
+
+# Agent/IDE local caches
+.gemini/
+.agents/
+bin/
+obj/

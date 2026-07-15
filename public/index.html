@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YouTube & Audio Remote</title>
+  
+  <!-- Google Fonts & PWA Meta -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <meta name="theme-color" content="#0a0a16">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fullscreen RGB Aura Border -->
+  <div id="rgb-aura" class="rgb-aura"></div>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Connection Status Header -->
+    <header class="glass-panel header-panel">
+      <div class="status-indicator">
+        <span id="status-dot" class="dot disconnected"></span>
+        <span id="status-text">Connecting to Laptop...</span>
+      </div>
+      <button id="btn-refresh" class="icon-btn small-btn" title="Refresh Connection">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+    </header>
+
+    <!-- Music Player Card -->
+    <main class="glass-panel player-card">
+      
+      <!-- Video Thumbnail / Album Art with RGB Glow -->
+      <div class="thumbnail-wrapper">
+        <div id="thumbnail-glow" class="thumbnail-glow"></div>
+        <img id="track-thumb" src="default-thumb.jpg" alt="Track Thumbnail" class="track-thumb paused">
+      </div>
+
+      <!-- Track Information -->
+      <div class="track-info">
+        <div class="title-container">
+          <h1 id="track-title" class="marquee">No Track Playing</h1>
+        </div>
+        <h2 id="track-artist">Connect your laptop and play YouTube</h2>
+      </div>
+
+      <!-- Progress / Seek Bar -->
+      <div class="progress-section">
+        <div class="time-display">
+          <span id="time-current">0:00</span>
+          <span id="time-total">0:00</span>
+        </div>
+        <div class="slider-container">
+          <input type="range" id="progress-slider" min="0" max="100" value="0" class="custom-slider">
+          <div id="progress-fill" class="slider-fill"></div>
+        </div>
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="controls-section">
+        <button id="btn-prev" class="icon-btn control-btn" title="Previous Track">
+          <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
+        </button>
+        
+        <button id="btn-play" class="icon-btn play-btn" title="Play/Pause">
+          <!-- Play Icon -->
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <!-- Pause Icon (hidden by default) -->
+          <svg id="pause-icon" viewBox="0 0 24 24" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        
+        <button id="btn-next" class="icon-btn control-btn" title="Next Track">
+          <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6z"/></svg>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- Laptop System Volume Card -->
+    <section class="glass-panel volume-card">
+      <div class="volume-header">
+        <h3>Laptop Volume</h3>
+        <span id="volume-val">50%</span>
+      </div>
+      <div class="volume-controls">
+        <button id="btn-mute" class="icon-btn mute-btn" title="Mute/Unmute">
+          <!-- Speaker Icon (Active) -->
+          <svg id="volume-icon-active" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <!-- Speaker Icon (Muted - hidden by default) -->
+          <svg id="volume-icon-muted" viewBox="0 0 24 24" class="hidden"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+        <div class="slider-container">
+          <input type="range" id="volume-slider" min="0" max="100" value="50" class="custom-slider">
+          <div id="volume-fill" class="slider-fill"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Network Info / Help Drawer -->
+    <footer class="glass-panel footer-panel text-center">
+      <p class="help-text">Connect to the same Wi-Fi as your laptop.</p>
+    </footer class="glass-panel">
+
+  </div>
+
+  <!-- Socket.IO library served by server -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

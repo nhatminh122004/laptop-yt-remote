@@ -1,0 +1,22 @@
+{
+  "short_name": "YT Remote",
+  "name": "YouTube & Laptop Audio Remote",
+  "description": "Điều khiển nhạc YouTube và âm lượng Laptop qua Wi-Fi với hiệu ứng nhấp nháy RGB.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "background_color": "#070715",
+  "theme-color": "#070715",
+  "display": "standalone",
+  "orientation": "portrait"
+}

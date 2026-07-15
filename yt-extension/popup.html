@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 240px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 14px;
+      background: #0b0b1e;
+      color: #ffffff;
+      margin: 0;
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #00f0ff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status {
+      font-size: 12px;
+      margin-bottom: 14px;
+      color: #8c8ca3;
+    }
+    .status span {
+      font-weight: bold;
+    }
+    .connected {
+      color: #39ff14;
+      text-shadow: 0 0 6px rgba(57, 255, 20, 0.4);
+    }
+    .disconnected {
+      color: #ff073a;
+      text-shadow: 0 0 6px rgba(255, 7, 58, 0.4);
+    }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    input:focus {
+      border-color: #00f0ff;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      background: linear-gradient(135deg, #ff007f, #8a2be2);
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(255, 0, 127, 0.3);
+      transition: transform 0.1s ease, filter 0.2s ease;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    button:hover {
+      filter: brightness(1.1);
+    }
+    .hint {
+      font-size: 10px;
+      color: #64647c;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <h3>YT Remote Settings</h3>
+  <div class="status">Server: <span id="status" class="disconnected">Offline</span></div>
+  <input type="text" id="server-url" placeholder="wss://ten-app.glitch.me" />
+  <button id="btn-save">Save & Connect</button>
+  <div class="hint">Nhập link máy chủ Cloud của bạn (bắt đầu bằng wss:// hoặc ws://). Ví dụ: wss://my-remote.glitch.me</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

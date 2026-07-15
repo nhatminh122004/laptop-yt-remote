@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Remote Controller",
+  "version": "1.2",
+  "description": "Điều khiển nhạc trên YouTube từ điện thoại Android thông qua kết nối mạng LAN.",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/watch*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
